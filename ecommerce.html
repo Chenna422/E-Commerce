@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Starlight Commerce</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <div id="app" class="max-w-7xl mx-auto p-4 md:p-6">
+        <!-- App Header -->
+        <header class="bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-lg p-4 mb-6 flex justify-between items-center sticky top-4 z-50">
+            <a href="#" onclick="navigate('products'); return false;" class="text-2xl font-bold text-cyan-400 hover:text-cyan-300 transition-colors">Starlight Commerce</a>
+            <nav class="flex items-center gap-4">
+                <a href="#" onclick="navigate('products'); return false;" class="text-gray-300 hover:text-white transition-colors">Products</a>
+                <a href="#" onclick="navigate('cart'); return false;" class="relative text-gray-300 hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                    </svg>
+                    <span id="cart-count" class="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                </a>
+                <div id="auth-container">
+                    <!-- Auth state will be rendered here -->
+                </div>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Page: Loading -->
+            <div id="page-loading" class="page active text-center py-20">
+                <svg class="animate-spin h-10 w-10 text-cyan-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="mt-4 text-gray-400">Initializing Secure Session...</p>
+            </div>
+
+            <!-- Page: Product Listings -->
+            <div id="page-products" class="page">
+                <h2 class="text-3xl font-bold mb-6 text-cyan-300">Our Products</h2>
+                <div id="product-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Products will be injected here -->
+                </div>
+            </div>
+
+            <!-- Page: Shopping Cart -->
+            <div id="page-cart" class="page">
+                <h2 class="text-3xl font-bold mb-6 text-cyan-300">Your Cart</h2>
+                <div id="cart-items" class="bg-gray-800 rounded-lg shadow-md p-6">
+                    <!-- Cart items will be rendered here -->
+                </div>
+                 <div id="cart-empty" class="text-center py-12 bg-gray-800 rounded-lg">
+                    <p class="text-gray-400">Your shopping cart is empty.</p>
+                    <button onclick="navigate('products')" class="mt-4 bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Shop for Products</button>
+                </div>
+            </div>
+            
+            <!-- Page: Authentication -->
+            <div id="page-auth" class="page">
+                <div class="max-w-md mx-auto bg-gray-800 p-8 rounded-xl shadow-2xl mt-10">
+                    <h2 class="text-3xl font-bold text-center mb-2 text-cyan-300">Welcome</h2>
+                    <p class="text-center text-gray-400 mb-6">Sign in or create an account to continue</p>
+                    <div id="auth-form-container">
+                        <!-- Auth UI will attach here -->
+                    </div>
+                    <div class="text-center mt-4">
+                        <p class="text-xs text-gray-500">Your data is secured using industry-standard encryption.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="text-center mt-12 text-gray-500 text-sm">
+            <p>&copy; 2025 Starlight Commerce. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, getDocs, onSnapshot, setDoc, deleteDoc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- CONFIGURATION ---
+        // IMPORTANT: PASTE YOUR FIREBASE CONFIG OBJECT HERE
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXixM5GzQ78eBH92LzObjsl-ahl3S504E",
+            authDomain: "my-e-commerce-site-f0473.firebaseapp.com",
+            projectId: "my-e-commerce-site-f0473",
+            storageBucket: "my-e-commerce-site-f0473.firebasestorage.app",
+            messagingSenderId: "750328433864",
+            appId: "1:750328433864:web:e42011957dfe6b0536e9fd",
+            measurementId: "G-9VJ11E8HVN"
+        }; // Paste your config here
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let app, auth, db;
+        let products = [];
+        let cart = {};
+        let currentUser = null;
+
+        // --- INITIALIZATION ---
+        function main() {
+            try {
+                if (!firebaseConfig.apiKey) {
+                    const loadingPage = document.getElementById('page-loading');
+                    loadingPage.innerHTML = `
+                        <div class="text-red-300 text-center max-w-md mx-auto bg-red-900/30 p-6 rounded-xl border border-red-500/50">
+                            <h3 class="font-bold text-lg text-red-200">Configuration Missing</h3>
+                            <p class="text-sm mt-2">Please paste your Firebase project configuration into the 'firebaseConfig' object in the ecommerce.html file.</p>
+                            <p class="text-xs mt-2 text-red-400/80">This is a required step to connect to your backend.</p>
+                        </div>`;
+                    return;
+                }
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+            } catch (e) {
+                console.error("Firebase initialization failed:", e);
+                document.getElementById('page-loading').innerHTML = `<p class="text-red-400">Error connecting to the backend. Please check the console for details.</p>`;
+                return;
+            }
+
+            setupAuthentication();
+        }
+
+        // --- NAVIGATION ---
+        window.navigate = function(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const targetPage = document.getElementById(`page-${page}`);
+            if (targetPage) {
+                targetPage.classList.add('active');
+            } else {
+                console.error(`Page not found: ${page}`);
+                document.getElementById('page-products').classList.add('active');
+            }
+        }
+
+        // --- AUTHENTICATION ---
+        function setupAuthentication() {
+            onAuthStateChanged(auth, user => {
+                document.getElementById('page-loading').classList.remove('active');
+                if (user) {
+                    currentUser = user;
+                    renderLoggedInState(user);
+                    listenToCartChanges();
+                    if(document.getElementById('page-auth').classList.contains('active')) {
+                        navigate('products');
+                    }
+                } else {
+                    currentUser = null;
+                    renderLoggedOutState();
+                    cart = {};
+                    updateCartUI();
+                    navigate('auth');
+                }
+                fetchProducts();
+            });
+        }
+        
+        function renderLoggedInState(user) {
+            const authContainer = document.getElementById('auth-container');
+            authContainer.innerHTML = `
+                <button id="logout-button" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm">Logout</button>
+            `;
+            document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
+        }
+
+        function renderLoggedOutState() {
+            const authContainer = document.getElementById('auth-container');
+            authContainer.innerHTML = `
+                <button onclick="navigate('auth')" class="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm">Login</button>
+            `;
+             document.getElementById('auth-form-container').innerHTML = `<p class="text-center text-gray-400">For this demo, you can sign in anonymously.</p><button id="anon-login" class="w-full mt-4 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">Sign In Anonymously</button>`;
+             if(!auth.currentUser) {
+                const anonLoginBtn = document.getElementById('anon-login');
+                if (anonLoginBtn) {
+                    anonLoginBtn.addEventListener('click', async () => {
+                        try {
+                            await signInAnonymously(auth);
+                        } catch (e) {
+                            console.error("Anonymous sign in failed", e);
+                        }
+                    });
+                }
+             }
+        }
+
+        // --- PRODUCT LOGIC ---
+        async function fetchProducts() {
+            const productList = document.getElementById('product-list');
+            if (!productList) return;
+
+            try {
+                const productsCollection = collection(db, 'products');
+                const productSnapshot = await getDocs(productsCollection);
+                
+                if (productSnapshot.empty) {
+                    productList.innerHTML = `
+                        <div class="col-span-full text-center bg-gray-800 p-8 rounded-lg">
+                            <h3 class="text-xl font-bold text-cyan-300">No Products Found</h3>
+                            <p class="text-gray-400 mt-2">Your store is ready to go! The next step is to add products.</p>
+                            <p class="text-gray-400 mt-1">Go to your Firebase Console, open Firestore Database, and manually add documents to the 'products' collection.</p>
+                        </div>
+                    `;
+                    products = [];
+                    return;
+                }
+
+                products = productSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderProducts();
+            } catch (error) {
+                console.error("Error fetching products:", error);
+                if (error.code === 'permission-denied') {
+                    const page = document.getElementById('page-products');
+                    page.innerHTML = `
+                        <div class="text-red-300 text-center max-w-2xl mx-auto bg-red-900/30 p-6 rounded-xl border border-red-500/50">
+                            <h3 class="font-bold text-xl text-red-200">Firestore Permission Denied</h3>
+                            <p class="text-sm mt-2">The app was blocked by your Firestore Security Rules from reading the product list.</p>
+                            <p class="text-sm mt-4">Please go to your Firebase Console, navigate to <strong>Firestore Database > Rules</strong>, and ensure your rules allow read access to the 'products' collection.</p>
+                            <p class="text-xs mt-2 text-red-400/80">This is a critical security step to protect your backend.</p>
+                            <div class="bg-gray-900 text-left text-xs p-3 mt-4 rounded-md text-cyan-200 font-mono">
+                                <span class="text-gray-400">// Recommended Rule:</span><br>
+                                match /products/{productId} {<br>
+                                &nbsp;&nbsp;allow read: if true;<br>
+                                &nbsp;&nbsp;allow write: if false; <span class="text-gray-500">// Prevents app from creating products</span><br>
+                                }
+                            </div>
+                        </div>`;
+                }
+            }
+        }
+        
+        function renderProducts() {
+            const productList = document.getElementById('product-list');
+            if (!productList || !products.length) return;
+            productList.innerHTML = products.map(p => `
+                <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden transition-transform transform hover:-translate-y-1">
+                    <img src="${p.imageUrl}" alt="${p.name}" class="w-full h-48 object-cover" onerror="this.src='https://placehold.co/600x400/111827/7ED9E4?text=Image+Error'">
+                    <div class="p-4">
+                        <h3 class="text-lg font-bold text-white">${p.name}</h3>
+                        <p class="text-gray-400 mt-1 h-10 overflow-hidden text-sm">${p.description}</p>
+                        <div class="flex justify-between items-center mt-4">
+                            <span class="text-xl font-bold text-cyan-400">$${p.price.toFixed(2)}</span>
+                            <button onclick="addToCart('${p.id}')" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- CART LOGIC ---
+        let cartUnsubscribe = null;
+        function listenToCartChanges() {
+             if (cartUnsubscribe) cartUnsubscribe();
+             if (!currentUser) return;
+
+            const cartCollection = collection(db, `/artifacts/${appId}/users/${currentUser.uid}/cart`);
+            cartUnsubscribe = onSnapshot(cartCollection, (snapshot) => {
+                cart = {};
+                snapshot.forEach(doc => {
+                    cart[doc.id] = doc.data().quantity;
+                });
+                updateCartUI();
+            });
+        }
+        
+        window.addToCart = async function(productId) {
+            if (!currentUser) {
+                navigate('auth');
+                return;
+            }
+            try {
+                const cartDocRef = doc(db, `/artifacts/${appId}/users/${currentUser.uid}/cart`, productId);
+                const currentQuantity = cart[productId] || 0;
+                await setDoc(cartDocRef, { 
+                    quantity: currentQuantity + 1,
+                    addedAt: serverTimestamp()
+                });
+            } catch (error) {
+                console.error("Error adding to cart:", error);
+            }
+        }
+
+        window.removeFromCart = async function(productId) {
+            if (!currentUser) return;
+            try {
+                const cartDocRef = doc(db, `/artifacts/${appId}/users/${currentUser.uid}/cart`, productId);
+                await deleteDoc(cartDocRef);
+            } catch (error) {
+                console.error("Error removing from cart:", error);
+            }
+        }
+        
+        function updateCartUI() {
+            const cartCount = document.getElementById('cart-count');
+            const cartItemsContainer = document.getElementById('cart-items');
+            const cartEmpty = document.getElementById('cart-empty');
+            
+            const totalItems = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+            cartCount.textContent = totalItems;
+            
+            if (totalItems === 0) {
+                cartItemsContainer.innerHTML = '';
+                cartItemsContainer.style.display = 'none';
+                cartEmpty.style.display = 'block';
+                return;
+            }
+
+            cartItemsContainer.style.display = 'block';
+            cartEmpty.style.display = 'none';
+
+            let cartHTML = '<div class="space-y-4">';
+            let subtotal = 0;
+
+            for (const productId in cart) {
+                const product = products.find(p => p.id === productId);
+                if (product) {
+                    const quantity = cart[productId];
+                    const itemTotal = product.price * quantity;
+                    subtotal += itemTotal;
+                    cartHTML += `
+                        <div class="flex items-center justify-between p-2 rounded-md bg-gray-700/50">
+                            <div class="flex items-center gap-4">
+                                <img src="${product.imageUrl}" alt="${product.name}" class="w-16 h-16 object-cover rounded-md">
+                                <div>
+                                    <p class="font-bold text-white">${product.name}</p>
+                                    <p class="text-sm text-gray-400">$${product.price.toFixed(2)} x ${quantity}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <p class="font-bold text-lg text-white">$${itemTotal.toFixed(2)}</p>
+                                <button onclick="removeFromCart('${productId}')" class="text-gray-500 hover:text-red-500 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            cartHTML += '</div>';
+
+            cartHTML += `
+                <div class="mt-6 pt-4 border-t border-gray-700 text-right">
+                    <p class="text-lg">Subtotal: <span class="font-bold text-2xl text-cyan-400">$${subtotal.toFixed(2)}</span></p>
+                    <button class="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors w-full sm:w-auto">Proceed to Checkout</button>
+                </div>
+            `;
+            cartItemsContainer.innerHTML = cartHTML;
+        }
+
+        // --- START THE APP ---
+        main();
+
+    </script>
+</body>
+</html>
+
